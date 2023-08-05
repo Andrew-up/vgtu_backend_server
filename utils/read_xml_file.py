@@ -1,6 +1,7 @@
-from definitions import ROOT_DIR
 import os.path
 import xml.etree.ElementTree as ET
+
+from definitions import ROOT_DIR
 
 
 class ReadXmlProject(object):
@@ -14,8 +15,8 @@ class ReadXmlProject(object):
         self._name_script = None
         self._model_path = None
         self._model_name = None
+        self._app_version = ''
         self._init_variable()
-
 
     def _init_variable(self):
         if os.path.exists(self.file_path):
@@ -27,9 +28,15 @@ class ReadXmlProject(object):
             self._path_dataset_image = train_model.find('path_dataset_image').text
             self._name_script = train_model.find('name_script').text
             self._model_path = train_model.find('model_path').text
+            self._app_version = root_node.find('app').find('version').text
+
             # self._model_name = train_model.find('model_name').text
         else:
             print(f'не найден {self.file_path}')
+
+    @property
+    def app_version(self) -> str:
+        return self._app_version
 
     @property
     def path_train_model(self):
@@ -58,9 +65,6 @@ class ReadXmlProject(object):
     @property
     def model_name(self):
         return self._model_name
-
-
-
 
 
 if __name__ == '__main__':

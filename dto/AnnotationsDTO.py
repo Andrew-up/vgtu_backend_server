@@ -1,5 +1,7 @@
 from dto.ResultPredictDTO import ResultPredictDTO
 from model.model import Annotations
+
+
 class AnnotationsDTO(object):
     def __init__(self, **entries):
         self.id_annotations: int = int()
@@ -11,8 +13,6 @@ class AnnotationsDTO(object):
         self.result_predict = None
         self.category = None
         self.__dict__.update(entries)
-
-
 
     def getAnnotation(self):
         a = Annotations()
@@ -35,4 +35,3 @@ class AnnotationsDTO(object):
         if self.result_predict is not None:
             dto.category = ResultPredictDTO(**self.result_predict.__dict__).getDto().__dict__
         return dto
-

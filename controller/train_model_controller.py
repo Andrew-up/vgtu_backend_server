@@ -1,20 +1,22 @@
 import json
 import os
-import zipfile
-from io import BytesIO
 
-from flask import Response, request, send_file, stream_with_context
+from flask import Response, request, stream_with_context
 
 from Hgjhgjhgjk import MyClass
-from controller import app, API_ROOT, read_file_chunks
+from controller import app, API_ROOT, read_file_chunks, get_message_by_request
 from dto.ModelUnetDTO import ModelUnetDTO, ModelUnet
 from repository.ModelUnetRepository import ModelUnetRepository
+from utils import logging_helpers
 from utils.GenerateCocoJsonFromDataBase import GenerateJsonFileFromDB
 from utils.read_xml_file import ReadXmlProject
+
+logger = logging_helpers.get_custom_logger(name_logging='api')
 
 
 @app.route(API_ROOT + '/model_cnn/last_model/')
 def get_last_history():
+    logger.debug(get_message_by_request(request))
     r = ModelUnetRepository(1)
     void_history = ModelUnetDTO()
     data = r.get_last_history_train()
@@ -29,13 +31,14 @@ def get_last_history():
 @app.route(API_ROOT + '/model_cnn/last_model/download/')
 def get_last_history_download():
     version = request.args.get('version')
+    logger.debug(get_message_by_request(request))
     if not version:
         return 'Укажите версию для загрузки'
     r = ModelUnetRepository(1)
     data = r.get_history_by_version(version)
     r = ReadXmlProject()
     if data:
-        full_path = os.path.join(r.path_train_model+r.model_path, data.name_file)
+        full_path = os.path.join(r.path_train_model + r.model_path, data.name_file)
         zip_name = f'{os.path.splitext(full_path)[0]}.zip'
         stats = os.stat(zip_name)
         print(stats.st_size)
@@ -69,7 +72,8 @@ def generate_new_version(version: str = None):
 
 @app.route(API_ROOT + '/model_cnn/train/')
 def train_model():
-    dto = ModelUnetDTO()
+    logger.debug(get_message_by_request(request))
+    # dto = ModelUnetDTO()
     r = ModelUnetRepository(1)
     data = r.get_last_history_train()
     if data is None or data.status == 'completed':
@@ -80,7 +84,7 @@ def train_model():
         if data:
             m.version = data.version
         m.version = generate_new_version(m.version)
-        m.name_file = f'model_{m.version.replace(".","_")}.pth'
+        m.name_file = f'model_{m.version.replace(".", "_")}.pth'
         new_data = r.add(m)
         dto = ModelUnetDTO(**new_data.__dict__).getDTO()
         ooooo = MyClass()
@@ -99,12 +103,14 @@ def train_model():
 
 @app.route(API_ROOT + "/ann_json/")
 def get_ann_json():
+    logger.debug(get_message_by_request(request))
     p = GenerateJsonFileFromDB()
     return p.generateJsonFile()
 
 
 @app.route(API_ROOT + '/model_cnn/update/', methods=['POST'])
 def update_model():
+    logger.debug(get_message_by_request(request))
     data: ModelUnet = ModelUnetDTO(**request.json).getModelUnet()
     repo = ModelUnetRepository(1)
     repo.update(data)
@@ -114,20 +120,24 @@ def update_model():
 
 @app.route(API_ROOT + '/model_cnn/add/', methods=['POST'])
 def add_history_model():
+    logger.debug(get_message_by_request(request))
     data: ModelUnet = ModelUnetDTO(**request.json).getModelUnet()
     repo = ModelUnetRepository(1)
     repo.add(data)
     print(data.status)
     return Response('ok', 200)
+
+
 @app.route(API_ROOT + '/model_cnn/history/all/', methods=['GET'])
 def get_all_history_model_training():
+    logger.debug(get_message_by_request(request))
     r = ModelUnetRepository(1)
     data = r.all_history()
     data_list = []
     xml = ReadXmlProject()
     for i in data:
         dto = ModelUnetDTO(**i.__dict__)
-        file_path = os.path.join(str(xml.path_train_model)+str(xml.model_path), str(dto.name_file))
+        file_path = os.path.join(str(xml.path_train_model) + str(xml.model_path), str(dto.name_file))
         print(file_path)
         if os.path.exists(file_path):
             dto.download = True
