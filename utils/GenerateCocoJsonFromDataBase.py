@@ -1,22 +1,16 @@
-import ast
 import base64
+import io
 import json
 import os.path
-import random
 import shutil
 from ast import literal_eval
-from io import BytesIO
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-import numpy as np
-from PIL import Image, ImageDraw
-from shapely import affinity
-from shapely.geometry import Polygon, MultiPolygon
+from PIL import Image
 
 from definitions import ROOT_DIR
-from dto.ResultPredictDTO import ResultPredictDTO
-from model.model import HistoryNeuralNetwork
+from model.model import HistoryNeuralNetwork, ResultPredict
+from repository.ModelUnetRepository import ModelUnetRepository
 from service.HealingHistoryService import HealingHistoryService
 from service.ResultPredictService import ResultPredictService
 from utils.read_xml_file import ReadXmlProject
@@ -52,7 +46,10 @@ class ImageObj(object):
         self.file_name: str = ''
 
     def save_image_from_base64(self, base64_image_string, image_path, ann=None):
-        img = Image.open(BytesIO(base64.b64decode(literal_eval(base64_image_string.decode('utf-8')))))
+        im_bytes = base64.b64decode(base64_image_string)  # im_bytes is a binary image
+        im_file = io.BytesIO(im_bytes)  # convert image to file-like object
+        img = Image.open(im_file)  # img is now PIL Image object
+        # img = Image.open(BytesIO(base64.b64decode(base64_image_string.decode('utf-8'))))
         # img, mask = self.randomflip(img, ann)
         print('=======================')
 
@@ -63,16 +60,22 @@ class ImageObj(object):
         return img, ann
 
 
-
 class CocoJsonFormatClass(object):
 
-    def __init__(self):
+    def __init__(self, save_image=False):
         # self.img = None
-
+        self.SAVE_IMAGE_BOOL = save_image
         self.info = info
         self.images: list[ImageObj] = []
         self.annotations: list[Annotations] = []
         self.categories: list[Categories] = []
+        self.image_folder_path = os.path.join(ROOT_DIR, 'dataset/temp_dataset')
+
+    def isBase64(self, s):
+        try:
+            return base64.b64encode(base64.b64decode(s)) == s
+        except Exception:
+            return False
 
     def addImage(self, string_base64=None, image_path=None, ann=None):
         image = ImageObj()
@@ -100,10 +103,13 @@ class CocoJsonFormatClass(object):
                 annotation.id = 0
             self.annotations.append(annotation)
 
-    def addCategories(self, catss: ResultPredictDTO.__dict__):
+    def start_qwe(self):
+        self.printImageId()
+
+    def addCategories(self, catss: ResultPredict):
         cat = Categories()
-        cat.id = catss['id_category']
-        cat.name = catss['name_category_eng']
+        cat.id = catss.id_category
+        cat.name = catss.name_category_eng
         self.categories.append(cat)
 
     def getJsonImages(self):
@@ -120,66 +126,74 @@ class CocoJsonFormatClass(object):
         c.images = json.loads(self.getJsonImages())
         c.annotations = json.loads(self.getJsonAnnotations())
         c.categories = json.loads(self.getJsonCategories())
+        c = c.__dict__
+        c.pop('SAVE_IMAGE_BOOL', None)
+        c.pop('image_folder_path', None)
         return c
+
+    def set_image_folder_path(self, path):
+        self.image_folder_path = path
+
+    def printImageId(self):
+        data = HealingHistoryService(1).getImageForDataset()
+        all_cat = ResultPredictService(1).getAll()
+        # print(data)
+        for j in all_cat:
+            self.addCategories(catss=j)
+
+        for i in data:
+            if not (self.isBase64(i.photo_predict_edit_doctor) and self.isBase64(i.photo_original)):
+                continue
+
+            if not self.SAVE_IMAGE_BOOL:
+                img = ImageObj()
+                img.id = i.id_history_neural_network
+                img.file_name = str(i.id_history_neural_network) + '.png'
+                self.images.append(img)
+                self.addAnnotation(img=img, history_nn=i)
+                continue
+
+            new_image, mask = self.addImage(string_base64=i.photo_original,
+                                            image_path=self.image_folder_path, ann=i)
+            if new_image and mask:
+                print(i.id_history_neural_network)
+                self.addAnnotation(img=new_image, history_nn=mask)
 
 
 class GenerateJsonFileFromDB(object):
 
     def __init__(self):
-        self.service = HealingHistoryService(1)
-        self.coco_class = CocoJsonFormatClass()
+        # self.service = HealingHistoryService(1)
+
+        self.coco_class = CocoJsonFormatClass(save_image=True)
         self.dataset_folder_path = None
         self.annotation_folder_path = None
         self.image_folder_path = None
         self.createFolder()
-        self.printImageId()
+        self.coco_class.start_qwe()
+        # self.printImageId()
         self.generateJsonFile()
         self.copy_datasetToModelTraining()
 
-    def printFolders(self):
-        print(self.dataset_folder_path)
-        print(self.annotation_folder_path)
-        print(self.image_folder_path)
-
-    def printImageId(self):
-        data = self.service.getImageForDataset()
-        all_cat = ResultPredictService(1).getAll()
-
-        for j in all_cat:
-            self.coco_class.addCategories(catss=j)
-        # bbbbb = True
-        # if bbbbb:
-
-        for i in data:
-            for j in range(1):
-                # print(i.annotations)
-                # pass
-                # print(i.annotations[0].segmentation)
-                new_image, mask = self.coco_class.addImage(string_base64=i.photo_original,
-                                                           image_path=self.image_folder_path, ann=i)
-                self.coco_class.addAnnotation(img=new_image, history_nn=mask)
-                # print(mask.annotations[0].segmentation)
-                # return 0
-                # print(mask == i)
-                # pass
-            pass
-
     def generateJsonFile(self):
-        with open(ROOT_DIR + '/dataset/annotations/data.json', 'w', encoding='utf-8') as f:
-            json.dump(self.coco_class.getJsonFull().__dict__, f, ensure_ascii=False, indent=4)
-        return self.coco_class.getJsonFull().__dict__
+        with open(os.path.join(self.annotation_folder_path, 'data.json'), 'w', encoding='utf-8') as f:
+            json.dump(self.coco_class.getJsonFull(), f, ensure_ascii=False, indent=4)
+        return self.coco_class.getJsonFull()
 
     def createFolder(self):
-        if os.path.exists(os.path.join(ROOT_DIR, 'dataset')):
-            shutil.rmtree(os.path.join(ROOT_DIR, 'dataset'))
+        r = ModelUnetRepository(doctor_id=1)
 
-        Path(ROOT_DIR + '/dataset').mkdir(parents=True, exist_ok=True)
-        Path(ROOT_DIR + '/dataset/annotations').mkdir(parents=True, exist_ok=True)
-        Path(ROOT_DIR + '/dataset/image').mkdir(parents=True, exist_ok=True)
-
-        self.dataset_folder_path = Path(ROOT_DIR + '/dataset')
-        self.annotation_folder_path = Path(ROOT_DIR + '/dataset/annotations')
-        self.image_folder_path = Path(ROOT_DIR + '/dataset/image')
+        if r.get_last_history_train().path_dataset:
+            folder_name = str(r.get_last_history_train().path_dataset)
+        else:
+            folder_name = 'default1111'
+        print(folder_name)
+        print(r.get_last_history_train())
+        self.annotation_folder_path = Path(ROOT_DIR + '/dataset/' + str(folder_name) + '/annotations/')
+        self.image_folder_path = Path(ROOT_DIR + '/dataset/' + str(folder_name) + '/image/')
+        os.makedirs(self.annotation_folder_path, exist_ok=True)
+        os.makedirs(self.image_folder_path, exist_ok=True)
+        self.coco_class.set_image_folder_path(self.image_folder_path)
 
     def copy_datasetToModelTraining(self):
         dataset_folder = os.path.join(ROOT_DIR, 'dataset')

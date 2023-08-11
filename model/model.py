@@ -1,4 +1,7 @@
-import os, sys, inspect
+import inspect
+import os
+import sys
+
 # Use this if you want to include modules from a subfolder
 cmd_subfolder = os.path.realpath(
     os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0], "subfolder")))
@@ -10,15 +13,17 @@ from sqlalchemy.orm import relationship
 from definitions import DATABASE_DIR
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy_serializer import SerializerMixin
 
 # print(DATABASE_DIR)
 Base = declarative_base()
+
 
 # TODO:
 # 1. подумать как хранить таблицы в разных файлах
 
 # Таблица пациента
-class Patient(Base):
+class Patient(Base, SerializerMixin):
     __tablename__ = 'Patient'
     id_patient = Column(Integer, primary_key=True)
     firstname = Column(String(250))
@@ -38,9 +43,11 @@ class Patient(Base):
     doctor: "Doctor" = relationship("Doctor", back_populates="patient", uselist=False)
     photo = Column(BLOB)
 
+    serialize_rules = ('-history', '-doctor', '-photo')
 
-#Результат распознавания нейронной сети
-class ResultPredict(Base):
+
+# Результат распознавания нейронной сети
+class ResultPredict(Base, SerializerMixin):
     __tablename__ = 'Result_predict'
     id_category = Column(Integer, primary_key=True)
     name_category_eng = Column(String(50))
@@ -48,9 +55,13 @@ class ResultPredict(Base):
     annotations = relationship("Annotations", back_populates="result_predict")
     color = Column(String(50))
 
-#История распознавания нейронной сети
+    serialize_rules = ('-annotations.result_predict', '-annotations.history_nn')
 
-class HistoryNeuralNetwork(Base):
+
+
+# История распознавания нейронной сети
+
+class HistoryNeuralNetwork(Base, SerializerMixin):
     __tablename__ = 'History_neural_network'
     id_history_neural_network = Column(Integer, primary_key=True)
     photo_original = Column(BLOB)
@@ -59,8 +70,9 @@ class HistoryNeuralNetwork(Base):
     healing_history = relationship("HealingHistory", back_populates="history_neutral_network", uselist=False)
     annotations: list["Annotations"] = relationship("Annotations", back_populates="history_nn")
 
-#История лечения пациента
-class HealingHistory(Base):
+
+# История лечения пациента
+class HealingHistory(Base, SerializerMixin):
     __tablename__ = 'Healing_history'
     id_healing_history = Column(Integer, primary_key=True)
     patient_id = Column(Integer, ForeignKey(Patient.id_patient))
@@ -71,8 +83,14 @@ class HealingHistory(Base):
     comment = Column(String(500))
     date = Column(String(100))
 
+    serialize_rules = ('-doctor',
+                       '-patient',
+                       '-history_neutral_network.annotations.history_nn',
+                       '-history_neutral_network.annotations.result_predict.annotations',
+                       '-history_neutral_network.healing_history')
 
-class Annotations(Base):
+
+class Annotations(Base, SerializerMixin):
     __tablename__ = 'Annotations_image'
     id_annotations = Column(Integer, primary_key=True)
     area = Column(Float(500))
@@ -85,7 +103,7 @@ class Annotations(Base):
 
 
 # Профиль доктора
-class Doctor(Base):
+class Doctor(Base, SerializerMixin):
     __tablename__ = 'Doctor'
     id_doctor = Column(Integer, primary_key=True)
     firstname = Column(String(250))
@@ -98,7 +116,7 @@ class Doctor(Base):
     healing_history = relationship(HealingHistory, back_populates="doctor")
 
 
-class ModelUnet(Base):
+class ModelUnet(Base, SerializerMixin):
     __tablename__ = 'Model_unet'
     id = Column(Integer, primary_key=True)
     version = Column(String(50))
@@ -115,12 +133,16 @@ class ModelUnet(Base):
     input_size = Column(String(50))
     output_size = Column(String(50))
     status = Column(String(50))
+    path_dataset = Column(String(250))
 
 
 def init_db():
     engine = create_engine(f"sqlite:///{DATABASE_DIR}", echo=True)
     Base.metadata.create_all(engine)
 
-if __name__ == '__main__':
-    init_db()
+def tyfyvhjgb():
+    print()
 
+if __name__ == '__main__':
+    # tyfyvhjgb()
+    init_db()

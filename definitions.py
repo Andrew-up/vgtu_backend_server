@@ -5,3 +5,4 @@ DATABASE_DIR = os.path.join(ROOT_DIR, "data_base/db.db")
 RELEASE_DIR = os.path.join(ROOT_DIR, "Release")
 LOG_DIR = os.path.join(ROOT_DIR, 'logging_files')
 SECRET_KEY = 'hFGHFEFyr67ggghhPJhdfh123dd'
+CONTENT_TYPE_JSON = 'application/json'

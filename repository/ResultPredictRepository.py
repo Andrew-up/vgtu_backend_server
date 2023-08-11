@@ -15,7 +15,7 @@ class ResultPredictRepository(AbstractRepository):
         self.doctor = doctor_id
 
     def get(self, id_category):
-        pass
+        return self.session.query(ResultPredict).order_by(ResultPredict.id_category).first()
 
     def add(self, data: ResultPredict):
         self.session.connection()
@@ -40,6 +40,7 @@ class ResultPredictRepository(AbstractRepository):
 
 if __name__ == '__main__':
     p = ResultPredictRepository(1)
-    sss = p.find_all_not_null()
-    for i in sss:
-        print(i.name_category_ru)
+    print(p.get(5).to_dict())
+    # sss = p.find_all_not_null()
+    # for i in sss:
+    #     print(i.name_category_ru)

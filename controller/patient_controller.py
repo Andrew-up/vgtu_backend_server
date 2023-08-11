@@ -3,8 +3,7 @@ import json
 from flask import request, Response
 
 from controller import app, API_ROOT, get_message_by_request
-from definitions import SECRET_KEY
-from dto.patientDTO import PatientDTO
+from definitions import SECRET_KEY, CONTENT_TYPE_JSON
 from service.patientService import PatientService
 from utils import logging_helpers
 
@@ -15,9 +14,8 @@ logger = logging_helpers.get_custom_logger(name_logging='api')
 def get_patients():
     logger.debug(get_message_by_request(request))
     p = PatientService(1)
-    zzz = p.getAll()
-    json_string = json.dumps([ob.__dict__ for ob in zzz], ensure_ascii=False)
-    return json_string
+    json_string = json.dumps([ob.to_dict() for ob in p.getAll()], ensure_ascii=False)
+    return Response(json_string, content_type=CONTENT_TYPE_JSON)
 
 
 @app.route(API_ROOT + 'patient/<id>/')
@@ -25,19 +23,16 @@ def get_patient_by_id(id):
     logger.debug(get_message_by_request(request))
     s_service = PatientService(1)
     p = s_service.getById(id)
-    json_string = json.dumps(p.__dict__, ensure_ascii=False)
-    return Response(json_string, status=200)
+    return Response(json.dumps(p.to_dict(), ensure_ascii=False), status=200, content_type=CONTENT_TYPE_JSON)
 
 
 @app.route(API_ROOT + "/add/", methods=['POST'])
 def add_new_patient():
     logger.debug(get_message_by_request(request))
-    data1: PatientDTO.__dict__ = request.json
-    dto = PatientDTO(**data1)
     s_service = PatientService(1)
-    res = s_service.add(dto)
-    json_string = json.dumps(res.__dict__, ensure_ascii=False)
-    return Response(json_string, 200)
+    res = s_service.add(request.json)
+    json_string = json.dumps(res.to_dict(), ensure_ascii=False)
+    return Response(json_string, 200, content_type=CONTENT_TYPE_JSON)
 
 
 @app.route(API_ROOT + 'patient/delete/<id>', methods=['POST', 'GET'])
@@ -46,8 +41,8 @@ def delete_patient(id):
         r = request.json
         if r['key'] == SECRET_KEY:
             print('delete')
-            srvise = PatientService(1)
-            res = srvise.deletePatientById(id_patient=id)
+            service = PatientService(1)
+            res = service.deletePatientById(id_patient=id)
             logger.debug(get_message_by_request(request))
             return Response(res, 200)
     else:

@@ -5,10 +5,10 @@ from flask import Response, request, stream_with_context
 
 from Hgjhgjhgjk import MyClass
 from controller import app, API_ROOT, read_file_chunks, get_message_by_request
-from dto.ModelUnetDTO import ModelUnetDTO, ModelUnet
+from model.model import ModelUnet
 from repository.ModelUnetRepository import ModelUnetRepository
 from utils import logging_helpers
-from utils.GenerateCocoJsonFromDataBase import GenerateJsonFileFromDB
+from utils.GenerateCocoJsonFromDataBase import GenerateJsonFileFromDB, CocoJsonFormatClass
 from utils.read_xml_file import ReadXmlProject
 
 logger = logging_helpers.get_custom_logger(name_logging='api')
@@ -18,13 +18,15 @@ logger = logging_helpers.get_custom_logger(name_logging='api')
 def get_last_history():
     logger.debug(get_message_by_request(request))
     r = ModelUnetRepository(1)
-    void_history = ModelUnetDTO()
+    void_history = ModelUnet()
     data = r.get_last_history_train()
-    if data:
-        data = ModelUnetDTO(**data.__dict__).getDTO()
-        return Response(json.dumps(data.__dict__, ensure_ascii=False), status=200,
+    print('data: ')
+    print(data.to_dict())
+    if data.id:
+        data = data.to_dict()
+        return Response(json.dumps(data, ensure_ascii=False), status=200,
                         headers={'Content-Type': 'application/json'})
-    return Response(json.dumps(void_history.__dict__, ensure_ascii=False), status=200,
+    return Response(json.dumps(void_history.to_dict(), ensure_ascii=False), status=200,
                     headers={'Content-Type': 'application/json'})
 
 
@@ -76,42 +78,49 @@ def train_model():
     # dto = ModelUnetDTO()
     r = ModelUnetRepository(1)
     data = r.get_last_history_train()
-    if data is None or data.status == 'completed':
-        p = GenerateJsonFileFromDB()
-        p.copy_datasetToModelTraining()
+    if data.version is None or data.status == 'completed':
         m = ModelUnet()
         m.status = 'Начат процесс обучения'
         if data:
             m.version = data.version
         m.version = generate_new_version(m.version)
         m.name_file = f'model_{m.version.replace(".", "_")}.pth'
+        m.path_dataset = str(m.version.replace(".", "_"))
         new_data = r.add(m)
-        dto = ModelUnetDTO(**new_data.__dict__).getDTO()
+
+        p = GenerateJsonFileFromDB()
+        p.copy_datasetToModelTraining()
+
         ooooo = MyClass()
         ooooo.start()
     else:
         if data.status == 'train':
-            dto = ModelUnetDTO(**data.__dict__).getDTO()
-            dto.status = 'Идет процесс обучения'
+            new_data = data
+            new_data.status = 'Идет процесс обучения'
         else:
-            dto = ModelUnetDTO(**data.__dict__).getDTO()
-            dto.status = 'Подождите'
+            new_data = data
+            new_data.status = 'Подождите'
 
-    return Response(json.dumps(dto.__dict__, ensure_ascii=False), status=200,
+    return Response(json.dumps(new_data.to_dict(), ensure_ascii=False), status=200,
                     headers={'Content-Type': 'application/json'})
 
 
+#
 @app.route(API_ROOT + "/ann_json/")
 def get_ann_json():
     logger.debug(get_message_by_request(request))
-    p = GenerateJsonFileFromDB()
-    return p.generateJsonFile()
+    p = CocoJsonFormatClass()
+    p.start_qwe()
+    return Response(json.dumps(p.getJsonFull(), ensure_ascii=False, indent=4), status=200,
+                    headers={'Content-Type': 'application/json'})
 
+
+#
 
 @app.route(API_ROOT + '/model_cnn/update/', methods=['POST'])
 def update_model():
     logger.debug(get_message_by_request(request))
-    data: ModelUnet = ModelUnetDTO(**request.json).getModelUnet()
+    data: ModelUnet = ModelUnet(**request.json)
     repo = ModelUnetRepository(1)
     repo.update(data)
     print(data.status)
@@ -121,7 +130,7 @@ def update_model():
 @app.route(API_ROOT + '/model_cnn/add/', methods=['POST'])
 def add_history_model():
     logger.debug(get_message_by_request(request))
-    data: ModelUnet = ModelUnetDTO(**request.json).getModelUnet()
+    data: ModelUnet = ModelUnet(**request.json)
     repo = ModelUnetRepository(1)
     repo.add(data)
     print(data.status)
@@ -136,11 +145,17 @@ def get_all_history_model_training():
     data_list = []
     xml = ReadXmlProject()
     for i in data:
-        dto = ModelUnetDTO(**i.__dict__)
-        file_path = os.path.join(str(xml.path_train_model) + str(xml.model_path), str(dto.name_file))
+        file_path = os.path.join(str(xml.path_train_model) + str(xml.model_path), str(i.name_file))
         print(file_path)
         if os.path.exists(file_path):
-            dto.download = True
-        data_list.append(dto.getDTO().__dict__)
+            i = i.to_dict()
+            i['download'] = True
+            # print(' download true')
+        data_list.append(i)
+    print(data_list)
     return Response(json.dumps(data_list, ensure_ascii=False), status=200,
                     headers={'Content-Type': 'application/json'})
+
+
+# if __name__ == '__main__':
+    # train_model(request)

@@ -18,6 +18,8 @@ class ModelUnetRepository(AbstractRepository):
         pass
 
     def add(self, data: ModelUnet):
+        print('add: ')
+        print(data)
         self.session.connection()
         self.session.add(data)
         self.session.commit()
@@ -69,7 +71,9 @@ class ModelUnetRepository(AbstractRepository):
         self.session.connection()
         m = self.session.query(ModelUnet).order_by(ModelUnet.id.desc()).first()
         self.session.close()
-        return m
+        if m:
+            return m
+        return ModelUnet()
 
     def get_history_by_version(self, version) -> ModelUnet:
         m = self.session.query(ModelUnet).filter(ModelUnet.version==version).first()

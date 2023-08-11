@@ -14,7 +14,6 @@ logger = logging_helpers.get_custom_logger(name_logging='api')
 @app.route('/api/app/version/')
 def check_version():
     logger.debug(get_message_by_request(request))
-    # print()
     return ReadXmlProject().app_version
 
 
