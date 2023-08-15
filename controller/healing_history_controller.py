@@ -27,6 +27,8 @@ def add_history_patient(id_patient):
     service.addHealingHistoryPatient(request.json)
     return Response('История добавлена', status=200)
 
+
+
 # @app.route(API_ROOT + 'history/<id_history>/')
 # def get_history_by_history_id(id_history):
 #     logger.debug(get_message_by_request(request))

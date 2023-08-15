@@ -3,15 +3,16 @@ from sqlalchemy.orm import sessionmaker
 
 from definitions import DATABASE_DIR
 from model.model import ResultPredict, Annotations
+from repository import ENGINE
 from repository.abstractRepository import AbstractRepository
 
-engine = create_engine(f"sqlite:///{DATABASE_DIR}", echo=True)
+
 
 
 class ResultPredictRepository(AbstractRepository):
 
     def __init__(self, doctor_id):
-        self.session = sessionmaker(bind=engine)()
+        self.session = sessionmaker(bind=ENGINE)()
         self.doctor = doctor_id
 
     def get(self, id_category):

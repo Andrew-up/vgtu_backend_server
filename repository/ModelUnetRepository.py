@@ -1,21 +1,21 @@
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from definitions import DATABASE_DIR
 from model.model import ModelUnet
+from repository import ENGINE
 from repository.abstractRepository import AbstractRepository
-
-engine = create_engine(f"sqlite:///{DATABASE_DIR}", echo=True)
 
 
 class ModelUnetRepository(AbstractRepository):
 
     def __init__(self, doctor_id):
-        self.session = sessionmaker(bind=engine)()
+        self.session = sessionmaker(bind=ENGINE)()
         self.doctor = doctor_id
 
-    def get(self, id_category):
-        pass
+    def get(self, id_model):
+        self.session.connection()
+        get: ModelUnet = self.session.query(ModelUnet).get(id_model)
+        self.session.close()
+        return get
 
     def add(self, data: ModelUnet):
         print('add: ')
@@ -29,7 +29,7 @@ class ModelUnetRepository(AbstractRepository):
 
     def update(self, new_history: ModelUnet):
         self.session.connection()
-        #Получение истории обучения по id
+        # Получение истории обучения по id
         history: ModelUnet = self.session.query(ModelUnet).get(new_history.id)
 
         # Обновление данных
@@ -66,7 +66,6 @@ class ModelUnetRepository(AbstractRepository):
         self.session.close()
         return history
 
-
     def get_last_history_train(self) -> ModelUnet:
         self.session.connection()
         m = self.session.query(ModelUnet).order_by(ModelUnet.id.desc()).first()
@@ -76,7 +75,7 @@ class ModelUnetRepository(AbstractRepository):
         return ModelUnet()
 
     def get_history_by_version(self, version) -> ModelUnet:
-        m = self.session.query(ModelUnet).filter(ModelUnet.version==version).first()
+        m = self.session.query(ModelUnet).filter(ModelUnet.version == version).first()
         return m
 
     def all_history(self) -> list[ModelUnet]:
@@ -85,6 +84,17 @@ class ModelUnetRepository(AbstractRepository):
         self.session.close()
         return m
 
+    def delete_by_id(self, id_model):
+        self.session.connection()
+        print('ИД: ========== ' + str(id_model))
+        model = self.session.query(ModelUnet).filter(ModelUnet.id == id_model).first()
+        if model:
+            self.session.delete(model)
+            self.session.commit()
+            self.session.close()
+            return {'status': 'ok'}
+        else:
+            return {'status': 'error'}
 
 
 if __name__ == '__main__':

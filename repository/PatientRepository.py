@@ -2,16 +2,17 @@ from sqlalchemy.orm import Session, sessionmaker, joinedload, Load, lazyload
 from sqlalchemy import create_engine
 
 from model.model import Patient, HealingHistory, ResultPredict
+from repository import ENGINE
 from repository.abstractRepository import AbstractRepository
 from definitions import DATABASE_DIR
 
-engine = create_engine(f"sqlite:///{DATABASE_DIR}", echo=True)
+
 
 
 class PatientRepository(AbstractRepository):
 
     def __init__(self, doctor_id):
-        self.session = sessionmaker(bind=engine)()
+        self.session = sessionmaker(bind=ENGINE)()
         self.doctor = doctor_id
 
     def get(self, id_patient) -> Patient:

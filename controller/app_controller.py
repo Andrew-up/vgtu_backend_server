@@ -11,6 +11,11 @@ from utils.read_xml_file import ReadXmlProject
 logger = logging_helpers.get_custom_logger(name_logging='api')
 
 
+"""
+HTTP контроллер для приложения, не взаимодействует с БД
+Может выдать версию приложения, статус сервера, файлы для обновления и т.д
+"""
+
 @app.route('/api/app/version/')
 def check_version():
     logger.debug(get_message_by_request(request))

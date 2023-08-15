@@ -18,9 +18,11 @@ from sqlalchemy_serializer import SerializerMixin
 # print(DATABASE_DIR)
 Base = declarative_base()
 
-
-# TODO:
-# 1. подумать как хранить таблицы в разных файлах
+"""
+Тут хранятся модели базы данных
+Используется sqlalchemy 1.4 declarative_base
+Больше информации : https://docs.sqlalchemy.org/en/14/orm/tutorial.html
+"""
 
 # Таблица пациента
 class Patient(Base, SerializerMixin):

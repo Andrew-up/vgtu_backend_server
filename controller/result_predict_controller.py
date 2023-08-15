@@ -15,7 +15,6 @@ def getAllCategorical():
     res = json.dumps(
         [ob.to_dict(only=('id_category', 'color', 'name_category_ru', 'name_category_eng')) for ob in s.getAll()],
         ensure_ascii=False)
-
     logger.debug(get_message_by_request(request))
 
     return Response(res, status=200, headers={'Content-Type': 'application/json'})

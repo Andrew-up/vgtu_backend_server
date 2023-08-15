@@ -18,6 +18,7 @@ class PatientService(object):
     def getAll(self) -> list[Patient]:
         repo = PatientRepository(self.doctor)
         listg = repo.find_all()
+        print(listg)
         return listg
 
     def add(self, patient: dict) -> Patient:

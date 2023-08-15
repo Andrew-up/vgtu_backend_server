@@ -1,10 +1,13 @@
 import json
 import os
+import os.path
+import subprocess
+import threading
 
 from flask import Response, request, stream_with_context
 
-from Hgjhgjhgjk import MyClass
 from controller import app, API_ROOT, read_file_chunks, get_message_by_request
+from definitions import SECRET_KEY
 from model.model import ModelUnet
 from repository.ModelUnetRepository import ModelUnetRepository
 from utils import logging_helpers
@@ -56,7 +59,6 @@ def get_last_history_download():
 def generate_new_version(version: str = None):
     version_str = '1.0.0'
     print(version)
-    print('SSSSSSSSSSSSSSSSSSSSS')
     if version is not None:
         n_version = list(version)
         if int(n_version[-1]) <= 99:
@@ -72,9 +74,40 @@ def generate_new_version(version: str = None):
     return version_str
 
 
+class MyClass(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.xml = ReadXmlProject()
+
+    def run(self):
+        print('ssssssssssssss')
+        path_script = os.path.join(self.xml.path_train_model, self.xml.name_script)
+        subprocess.run(['python3', path_script],
+                       executable=self.xml.path_python_interceptor, shell=False)
+
+
+@app.route(API_ROOT + '/model_cnn/delete/<id>', methods=['POST', 'GET'])
+def delete_model_cnn(id):
+    if request.method == 'POST':
+        r = request.json
+        if r['key'] == SECRET_KEY:
+            print('delete')
+            repo = ModelUnetRepository(1)
+            status = repo.delete_by_id(id)
+            logger.debug(get_message_by_request(request))
+            return Response(json.dumps(status, ensure_ascii=False, indent=4), status=200,
+                            headers={'Content-Type': 'application/json'})
+    else:
+        logger.warning(get_message_by_request(request))
+        return Response('Ошибка доступа', 401)
+
+
 @app.route(API_ROOT + '/model_cnn/train/')
 def train_model():
-    logger.debug(get_message_by_request(request))
+    try:
+        logger.debug(get_message_by_request(request))
+    except RuntimeError as e:
+        print(e)
     # dto = ModelUnetDTO()
     r = ModelUnetRepository(1)
     data = r.get_last_history_train()
@@ -137,25 +170,44 @@ def add_history_model():
     return Response('ok', 200)
 
 
+@app.route(API_ROOT + '/model_cnn/<id>/', methods=['GET'])
+def check_model_by_id(id):
+    r = ModelUnetRepository(1)
+    res = r.get(id_model=id)
+    xml = ReadXmlProject()
+    file_path = os.path.join(str(xml.path_train_model) + str(xml.model_path), str(res.name_file))
+    if os.path.exists(file_path):
+        res = res.to_dict()
+        res['download'] = True
+    else:
+        res = res.to_dict()
+    return Response(json.dumps(res, ensure_ascii=False, indent=4), status=200,
+                    headers={'Content-Type': 'application/json'})
+
+
 @app.route(API_ROOT + '/model_cnn/history/all/', methods=['GET'])
 def get_all_history_model_training():
     logger.debug(get_message_by_request(request))
     r = ModelUnetRepository(1)
     data = r.all_history()
+    print(data)
     data_list = []
     xml = ReadXmlProject()
     for i in data:
         file_path = os.path.join(str(xml.path_train_model) + str(xml.model_path), str(i.name_file))
         print(file_path)
+        i = i.to_dict()
         if os.path.exists(file_path):
-            i = i.to_dict()
             i['download'] = True
             # print(' download true')
+
         data_list.append(i)
     print(data_list)
-    return Response(json.dumps(data_list, ensure_ascii=False), status=200,
+    return Response(json.dumps(data_list, ensure_ascii=False, indent=4), status=200,
                     headers={'Content-Type': 'application/json'})
 
 
-# if __name__ == '__main__':
-    # train_model(request)
+if __name__ == '__main__':
+    p = CocoJsonFormatClass()
+    p.start_qwe()
+    train_model()

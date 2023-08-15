@@ -6,13 +6,13 @@ from definitions import DATABASE_DIR
 from model.model import HealingHistory, ResultPredict, HistoryNeuralNetwork, Annotations
 from repository.abstractRepository import AbstractRepository
 
-engine = create_engine(f"sqlite:///{DATABASE_DIR}", echo=True)
+from repository import ENGINE
 
 
 class HealingHistoryRepository(AbstractRepository):
 
     def __init__(self, doctor_id):
-        self.session = sessionmaker(bind=engine)()
+        self.session = sessionmaker(bind=ENGINE)()
         self.doctor = doctor_id
 
     def get(self, id_history) -> HealingHistory:
