@@ -1,7 +1,10 @@
 from flask import Flask, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# корневой для для приложения пример: localhost:8080/API_ROOT -> localhost:8080/api
+
+"""
+корневой для для приложения пример: localhost:8080/API_ROOT -> localhost:8080/api
+"""
 API_ROOT = '/api/'
 
 app = Flask(__name__)
@@ -11,12 +14,24 @@ app.wsgi_app = ProxyFix(
 
 
 class Client:
-    ip_client = None,
+    ip_client = None
     url = None
 
 
-# получает IP и url и возвращает строку, используется для логгирования
-def get_message_by_request(req: request):
+def get_message_by_request(req):
+    """
+    :param req:
+        :class:`flask.Request` - HTTP запрос Flask.
+    :return:
+        Строка с информацией о клиенте.
+    :rtype: str
+
+    1. Пример::
+
+           Привер овыпагннуш4пеи
+            нукмерукомеику
+
+    """
     client = Client()
     client.ip_client = req.remote_addr
     client.url = req.path
@@ -25,6 +40,11 @@ def get_message_by_request(req: request):
 
 
 def read_file_chunks(path):
+    """
+
+    this is  class: :class:`bool`
+
+    """
     CHUNK_SIZE = 8192
     with open(path, 'rb') as fd:
         while 1:
@@ -35,14 +55,18 @@ def read_file_chunks(path):
                 break
 
 
-
 def create_app():
     """
     Инициализация всех маршрутов приложения
+
     app_controller - маршруты приложения, нет связи с бд
+
     patient_controller - маршруты для взаимодействия с таблицей пациентов
+
     healing_history_controller - маршруты для взаимодействия с таблицей история лечения пациентов
+
     result_predict_controller - маршруты для взаимодействия  с таблицей результатов распознавания
+
     train_model_controller - маршруты для запуска субпроцессов обучения модели, загрузка модели
     """
     import controller.app_controller

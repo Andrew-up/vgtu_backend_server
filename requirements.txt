@@ -9,3 +9,4 @@ numpy~=1.24.2
 matplotlib~=3.7.1
 shapely~=2.0.1
 sqlalchemy_serializer
+sphinx
