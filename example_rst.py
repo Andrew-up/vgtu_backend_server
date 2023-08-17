@@ -1,4 +1,5 @@
 """
+
 =====================================================
  The reStructuredText_ Cheat Sheet: Syntax Reminders
 =====================================================
@@ -138,7 +139,7 @@ with role`:emphasis:; ``inline literal text``; standalone hyperlink,
 https://docutils.sourceforge.io; named reference, reStructuredText_;
 `anonymous reference`__; footnote reference, [1]_; citation reference,
 [CIT2002]_; |substitution|; _`inline internal target`.
-
+
 Directive Quick Reference
 =========================
 See <https://docutils.sourceforge.io/docs/ref/rst/directives.html> for full info.

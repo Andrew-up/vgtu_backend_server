@@ -1,7 +1,10 @@
+======
 API
 ======
+
+==============================
 Основные настройки контроллера
-________________________________
+==============================
 
 .. automodule:: controller.__init__
     :members:
@@ -9,23 +12,50 @@ ________________________________
     :undoc-members:
 
 
-
+=====================
 Контроллер приложения
-________________________________
+=====================
 
 .. automodule:: controller.app_controller
     :members:
     :inherited-members:
     :undoc-members:
 
-Пример RST
-________________________________
+==========================
+Контроллер истории лечения
+==========================
 
-.. automodule:: example_rst
+.. automodule:: controller.healing_history_controller
     :members:
     :inherited-members:
     :undoc-members:
 
+========================
+Контроллер для пациентов
+========================
+
+.. automodule:: controller.patient_controller
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+===================================
+Контроллер результатов предсказания
+===================================
+
+.. automodule:: controller.result_predict_controller
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+
+==========================
+Контроллер обучения модели
+==========================
+
+.. automodule:: controller.train_model_controller
+    :members:
+    :undoc-members:
 
 
 

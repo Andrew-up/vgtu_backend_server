@@ -80,7 +80,9 @@ class MyClass(threading.Thread):
         self.xml = ReadXmlProject()
 
     def run(self):
-        print('ssssssssssssss')
+        """
+        Запускает subprocess в отдельном потоке
+        """
         path_script = os.path.join(self.xml.path_train_model, self.xml.name_script)
         subprocess.run(['python3', path_script],
                        executable=self.xml.path_python_interceptor, shell=False)

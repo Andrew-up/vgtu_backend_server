@@ -1,10 +1,8 @@
-from flask import Flask, request
+from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
-"""
-корневой для для приложения пример: localhost:8080/API_ROOT -> localhost:8080/api
-"""
+
 API_ROOT = '/api/'
 
 app = Flask(__name__)
@@ -19,17 +17,16 @@ class Client:
 
 
 def get_message_by_request(req):
+
+
     """
+    Данный метод используется для логгирования.
+
     :param req:
         :class:`flask.Request` - HTTP запрос Flask.
     :return:
         Строка с информацией о клиенте.
     :rtype: str
-
-    1. Пример::
-
-           Привер овыпагннуш4пеи
-            нукмерукомеику
 
     """
     client = Client()
@@ -41,9 +38,12 @@ def get_message_by_request(req):
 
 def read_file_chunks(path):
     """
+    Читает файл порциями заданного размера.
 
-    this is  class: :class:`bool`
-
+    :param path: путь к файлу
+    :type path: str
+    :return: генератор, выдающий порции данных из файла
+    :rtype: generator
     """
     CHUNK_SIZE = 8192
     with open(path, 'rb') as fd:
@@ -57,17 +57,14 @@ def read_file_chunks(path):
 
 def create_app():
     """
-    Инициализация всех маршрутов приложения
+    Инициализация всех маршрутов приложения:
 
-    app_controller - маршруты приложения, нет связи с бд
+    - app_controller - маршруты приложения, нет связи с бд.
+    - patient_controller - маршруты для взаимодействия с таблицей пациентов.
+    - healing_history_controller - маршруты для взаимодействия с таблицей история лечения пациентов.
+    - result_predict_controller - маршруты для взаимодействия  с таблицей результатов распознавания.
+    - train_model_controller - маршруты для запуска субпроцессов обучения модели, загрузка модели.
 
-    patient_controller - маршруты для взаимодействия с таблицей пациентов
-
-    healing_history_controller - маршруты для взаимодействия с таблицей история лечения пациентов
-
-    result_predict_controller - маршруты для взаимодействия  с таблицей результатов распознавания
-
-    train_model_controller - маршруты для запуска субпроцессов обучения модели, загрузка модели
     """
     import controller.app_controller
     import controller.patient_controller
