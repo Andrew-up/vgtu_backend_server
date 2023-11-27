@@ -185,6 +185,19 @@ def delete_model_cnn(id):
 
 @app.route(API_ROOT + '/model_cnn/train/')
 def train_model():
+
+    """
+    Добавляет запись в бд с новой ModelUnet
+    и запускает класс MyClass в отдельном потоке
+
+    .. warning::
+        - Сейчас это сделано с помощью запуска субпроцесса.
+        - Требуется в проекте для тренировки модели сделать API.
+        - Если сейчас приложение запускать в контейнере, работать не будет.
+
+    :return: JSON
+    """
+
     try:
         logger.debug(get_message_by_request(request))
     except RuntimeError as e:
@@ -222,6 +235,13 @@ def train_model():
 #
 @app.route(API_ROOT + "/ann_json/")
 def get_ann_json():
+    """
+    Возвращает список всех изображений которые используются для обучения CNN и список аннотаций к ним в формате COCO.
+
+    Прочитать про COCO формат можно `тут <https://cocodataset.org/#format-data>`_
+
+    :return: JSON содержащий файл аннотации COCO
+    """
     logger.debug(get_message_by_request(request))
     p = CocoJsonFormatClass()
     p.start_qwe()
@@ -358,6 +378,13 @@ def check_model_by_id(id):
 
 @app.route(API_ROOT + '/model_cnn/history/all/', methods=['GET'])
 def get_all_history_model_training():
+    """
+    Возвращает список всех историй доступных для загрузки.
+
+    Тоже самое что и get_last_history_download() только вовзращает список историй.
+
+    :return: Список историй доступтных для загрузки.
+    """
     logger.debug(get_message_by_request(request))
     r = ModelUnetRepository(1)
     data = r.all_history()
@@ -368,7 +395,6 @@ def get_all_history_model_training():
         i = i.to_dict()
         if os.path.exists(file_path):
             i['download'] = True
-
         data_list.append(i)
     return Response(json.dumps(data_list, ensure_ascii=False, indent=4), status=200,
                     headers={'Content-Type': 'application/json'})

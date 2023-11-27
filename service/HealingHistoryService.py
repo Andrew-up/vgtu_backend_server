@@ -1,6 +1,10 @@
 from repository.HealingHistoryRepository import HealingHistoryRepository
 
 class HealingHistoryService(object):
+
+    """
+    Выступает слоем между репозиторием и контроллером
+    """
     def __init__(self, doctor_id):
         self.doctor = doctor_id
 
